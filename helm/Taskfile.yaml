@@ -9,7 +9,8 @@ env:
   PADDING: "1 1"
   MARGIN: "1 1"
   DOCKER_REPO: "superelectron/kubernetes-load-generator"
-  T_NAMESPACE: "system-tester"
+  # Override per-run:  T_NAMESPACE=my-ns task <target>
+  T_NAMESPACE: '{{.T_NAMESPACE | default "k8s-load-tester"}}'
 
 ###########################################################################
 includes:

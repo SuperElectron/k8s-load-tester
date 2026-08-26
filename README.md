@@ -1,13 +1,15 @@
-# Load Generator
+# k8s-load-tester
 
-This is a minimal web application with the following microservices
+Load-test a real multi-service stack on Kubernetes, without needing a real app to test against.
+
+Spin up a client, API, and database on a local cluster, aim a load generator at it, and watch how it holds up — resource limits, autoscaling, ingress, connection pressure.
+
+## What's deployed
 
 - **React frontend:** Uses react query to load data from an api and display the result.
-- **Go API:** Both have `/` and `/ping` endpoints. `/` queries the Database for the current time and the number of requests for each api recorded within the database, and `/ping` returns `pong`.
+- **Go API:** Has `/` and `/ping` endpoints. `/` queries the Database for the current time and the number of requests for each api recorded within the database, and `/ping` returns `pong`.
 - **Postgres Database:** An empty PostgreSQL database with no tables or data. Used to show how to set up connectivity. The API applications execute `SELECT NOW() as now;` to determine the current time to return.
-
-We have also included a load tester to simulate client requests
-- **Python Load Generator:** Queries the GO API at a configurable speed.
+- **Python Load Generator:** Queries the Go API at a configurable rate, set by `DELAY_MS` between requests.
 
 ![](./docs/screenshot.png)
 
@@ -30,9 +32,16 @@ There are two ways to run.
 1. **Docker** is for local development AND you need to build and push the images. View [src/Taskfile.yaml](src/Taskfile.yaml).
 2. **Kubernetes** is for deployment, uses KinD (kubernetes in Docker) for local or AWS for cloud.  View [helm/Taskfile.yaml](helm/Taskfile.yaml).
 
-__initiate shell__
+__use your own images__
 
-- it is important to note that this repo uses my Dockerhub, `superelectron`, for everything. You'll need to replace any references.
+Images push to my Dockerhub org, `superelectron`. To use your own, replace it in:
+
+- `image.repository` — `helm/{api-golang,client,load-generator}/values.yaml`
+- `DOCKER_REPO` — `helm/Taskfile.yaml`
+- `IMAGE_REPO` — `src/{api-golang,client,load-generator,postgresql}/Taskfile.yaml`
+- `image:` — `src/docker-compose.yml` and `src/*/Tiltfile`
+
+__initiate shell__
 
 ```bash
 # start the shell session
@@ -72,16 +81,32 @@ And, we can deploy locally using KinD, to run the kubernetes cluster
 # go into Kubernetes directory
 cd helm
 
-# start the KinD cluster 
+# create the KinD cluster
+# this runs cloud-provider-kind in the foreground, so leave it running
 task prepare
 
-# Open another terminal, and run this to start
-task start
+# in a second terminal, deploy the stack in order
+task namespace
+task deploy-traefik
+task postgres
+task api-golang
+task client
 
-# after you are done, clean up (will wipe all helm references too)
-# you can kill the other terminal after this
+# start the load test
+task load-test
+
+# when you are done, tear it all down
+# you can kill the first terminal after this
 task stop
 task delete
+```
+
+The cluster and namespace are both named `k8s-load-tester`. Override either without
+editing the files:
+
+```bash
+CLUSTER_NAME=my-cluster task cluster:start
+T_NAMESPACE=my-ns task namespace
 ```
 
 ---

@@ -1,7 +1,8 @@
 version: "3"
 
 env:
-  CLUSTER_NAME: system-tester
+  # Override per-run:  CLUSTER_NAME=my-cluster task <target>
+  CLUSTER_NAME: '{{.CLUSTER_NAME | default "k8s-load-tester"}}'
   # Set default gum style options
   BORDER: double
   BORDER_FOREGROUND: "212"
@@ -16,10 +17,10 @@ tasks:
       - kind create cluster --config kind-config.yaml
 
       # start the cloud provider, so that you have an external IP address with traefik
-      # $ kubectl get svc -n system-tester
+      # $ kubectl get svc -n ${T_NAMESPACE}
       - sudo ../../.cache/bin/cloud-provider-kind
   stop:
     desc: "Stop and clean up cluster"
     cmds:
-      - kind delete cluster
+      - kind delete cluster --name ${CLUSTER_NAME}
 

@@ -9,7 +9,11 @@ service:
   port: 8080
 
 env:
-  apiUrl: http://api-golang.system-tester.svc.cluster.local:8080
+  # Leave apiUrl empty to target apiService inside this release's own namespace.
+  # Set it to a full URL to aim the generator at an external target instead.
+  apiUrl: ""
+  apiService: api-golang
+  apiPort: 8080
   delayMs: "100"
 
 configMap:
