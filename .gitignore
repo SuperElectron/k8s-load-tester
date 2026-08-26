@@ -14,3 +14,9 @@ bin/
 # Python junk
 __pycache__
 **/*/node_modules
+
+# Go air build artifacts
+src/api-golang/tmp/
+
+# Agent operational state - never commit
+.omc/

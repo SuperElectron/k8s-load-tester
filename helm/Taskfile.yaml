@@ -9,7 +9,8 @@ env:
   PADDING: "1 1"
   MARGIN: "1 1"
   DOCKER_REPO: "superelectron/kubernetes-load-generator"
-  T_NAMESPACE: "system-tester"
+  # Override per-run:  T_NAMESPACE=my-ns task <target>
+  T_NAMESPACE: '{{.T_NAMESPACE | default "k8s-load-tester"}}'
 
 ###########################################################################
 includes:
@@ -37,24 +38,28 @@ includes:
 ###########################################################################
 tasks:
 
-#  start:
-#    - task: apply-namespace
-#    - task: deploy-traefik
-#
-#    - task: postgres
-#    - task: api-golang
-
 ### STEP 1
   prepare:
-    desc: "Create golang api with namespace"
+    desc: "Create the KinD cluster (runs cloud-provider-kind in the foreground)"
     cmds:
       - task: cluster:start
 
   namespace:
-    desc: "Apply Kubernetes Namespace"
+    desc: "Create the namespace and switch kubectl context to it"
     cmds:
-      - kubectl create namespace {{.T_NAMESPACE}}
+      # idempotent, so 'start' can be re-run against a live cluster
+      - kubectl create namespace {{.T_NAMESPACE}} --dry-run=client -o yaml | kubectl apply -f -
       - kubens {{.T_NAMESPACE}}
+
+### STEP 1.5 - bring the whole stack up in one shot
+  start:
+    desc: "Deploy the full stack (run in a second terminal, after 'task prepare')"
+    cmds:
+      - task: namespace
+      - task: deploy-traefik
+      - task: postgres
+      - task: api-golang
+      - task: client
 
 ### STEP 2
   # kubectl get namespaces

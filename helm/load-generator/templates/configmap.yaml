@@ -4,5 +4,5 @@ metadata:
   name: {{ .Values.configMap.name }}
   namespace: {{ .Release.Namespace }}
 data:
-  API_URL: "{{ .Values.env.apiUrl }}"
+  API_URL: {{ include "load-generator.apiUrl" . | quote }}
   DELAY_MS: "{{ .Values.env.delayMs }}"
