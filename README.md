@@ -85,12 +85,8 @@ cd helm
 # this runs cloud-provider-kind in the foreground, so leave it running
 task prepare
 
-# in a second terminal, deploy the stack in order
-task namespace
-task deploy-traefik
-task postgres
-task api-golang
-task client
+# in a second terminal, deploy the whole stack
+task start
 
 # start the load test
 task load-test
